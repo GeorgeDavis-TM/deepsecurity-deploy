@@ -48,6 +48,7 @@ if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then
         echo "Deployment token parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>."
         logger -t Deployment token parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>.
         exit 1;
+    fi
 
     MANAGERURL="https://workload.${dsmRegion}.cloudone.trendmicro.com:443"
     ACTIVATIONURL='dsm://agents.workload.${dsmRegion}.cloudone.trendmicro.com:443/'
@@ -100,18 +101,25 @@ if [[ $hasDSA != 1 ]]; then
         echo "Deployment token parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>."
         logger -t Deployment token parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>.
         exit 1;
+    fi
 
     if [[ -z "${dsApiKey}" ]]; then
         echo "Api Key parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>."
         logger -t Api Key parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>.
         exit 1;
-
+    fi
 
     apiKeyId=`echo $dsApiKey | awk '{split($1,id,":"); print id[1]}'`    
 
     if ! type curl >/dev/null 2>&1; then
         echo "Please install CURL before running this script."
         logger -t Please install CURL before running this script.
+        exit 1;
+    fi
+
+    if ! type jq >/dev/null 2>&1; then
+        echo "Please install jq before running this script."
+        logger -t Please install jq before running this script.
         exit 1;
     fi
 
@@ -163,9 +171,10 @@ if [[ $hasDSA != 1 ]]; then
         rc=$?
     else
         echo "Failed to download the agent package. Please make sure the package is imported in the Workload Security Manager."
-        logger -t "Failed to download the agent package. Please make sure the package is imported in the Workload Security Manager"
+        logger -t Failed to download the agent package. Please make sure the package is imported in the Workload Security Manager
         exit 1;
     fi
+
     if [[ ${rc} != 0 ]]; then
         echo "Failed to install the agent package."
         logger -t Failed to install the agent package.
