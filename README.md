@@ -1,5 +1,5 @@
 # deepsecurity-deploy
-An **idempotent** script to deploy Deep Security agent.
+An **idempotent** script to deploy Deep Security agent. An idempotent script can be run multiple times and achieves the exact same result. In this case, activate the Deep Security agent on the machine.
 
 This script runs to execute the following, in the same order
 - Checks to see if the script is running as **root**. Installation of the Deep Security agent should be run as root to be successful.
@@ -15,7 +15,7 @@ This script runs to execute the following, in the same order
 > The API key needs to be passed to the Bash script as an argument during runtime, like so `sudo ./agent_health_status.sh <your-api-key>`
 
 ## Notes
-- A security policy wont be assigned. The script only activates the agent with the Deep Security Manager instance that the API key is associated with.
+- A security policy wont be assigned. The script only activates the agent with the Deep Security Manager instance that the API key is associated with. A policy can be assigned based on Event-based tasks such as Agent-Initiated Activation, found [here]("https://cloudone.trendmicro.com/docs/workload-security/event-based-tasks/#events-that-you-can-monitor") on the product documentation.
 - The API key is used in multiple scenarios as part of this script
     - to fetch the dsmRegion, to build the MANAGERURL variable.
     - to fetch the dsTenantId, to download the agent package from the right DSM.
