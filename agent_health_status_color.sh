@@ -93,8 +93,8 @@ fi
 if [[ $hasDSA != 1 ]]; then
 
     if [[ -z "${dsApiKey}" ]]; then
-        printf "${ERR}Api Key parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>.${NC}\n";
-        logger -t Api Key parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>.
+        printf "${ERR}Api Key parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key>.${NC}\n";
+        logger -t Api Key parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key>.
         exit 1;
     fi
 
@@ -172,6 +172,8 @@ if [[ $hasDSA != 1 ]]; then
 
     printf "${SUCCESS}Install the agent package successfully.${NC}\n";
     logger -t Install the agent package successfully.
+
+    dsDeploymentToken=$(eval curl -X POST -L $MANAGERURL/api/agentdeploymentscripts -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' $HEADERS $CURLOPTIONS | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}'
 
     sleep 15
     /opt/ds_agent/dsa_control -r
