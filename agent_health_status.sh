@@ -1,8 +1,8 @@
 #!/bin/bash
 dsApiKey=$1
-dsDeploymentToken=$2
 
 CURLOPTIONS='--silent --tlsv1.2';
+HEADERS='-H "Authorization: ApiKey ${dsApiKey}" -H "Api-Version: v1" -H "Content-Type: application/json"';
 linuxPlatform='';
 isRPM='';
 
@@ -42,13 +42,7 @@ if [[ $hasDSA == 1 ]]; then
 fi
 
 # Has ds_agent, but not operational
-if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then    
-
-    if [[ -z "${dsDeploymentToken}" ]]; then
-        echo "Deployment token parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>."
-        logger -t Deployment token parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>.
-        exit 1;
-    fi
+if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then
 
     MANAGERURL="https://workload.${dsmRegion}.cloudone.trendmicro.com:443"
     ACTIVATIONURL='dsm://agents.workload.${dsmRegion}.cloudone.trendmicro.com:443/'
@@ -81,7 +75,9 @@ if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then
         echo "Unsupported platform is detected."
         logger -t Unsupported platform is detected.
         exit 1;
-    fi    
+    fi
+
+    dsDeploymentToken=$(eval curl -X POST -L $MANAGERURL/api/agentdeploymentscripts -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' $HEADERS $CURLOPTIONS | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}' 
 
     # Reset the ds_agent, for good measure
     /opt/ds_agent/dsa_control -r
@@ -90,18 +86,7 @@ if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then
 fi
 
 # Infer no ds_agent installed
-if [[ $hasDSA != 1 ]]; then    
-
-    CURLOPTIONS='--silent --tlsv1.2'
-    HEADERS='-H "Authorization: ApiKey ${dsApiKey}" -H "Api-Version: v1"'
-    linuxPlatform='';
-    isRPM='';
-
-    if [[ -z "${dsDeploymentToken}" ]]; then
-        echo "Deployment token parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>."
-        logger -t Deployment token parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>.
-        exit 1;
-    fi
+if [[ $hasDSA != 1 ]]; then
 
     if [[ -z "${dsApiKey}" ]]; then
         echo "Api Key parameter was not passed when running this script. Retry this script with: sudo ./agent_health_status.sh <your-api-key> <your-deployment=token>."
