@@ -7,7 +7,7 @@ WARN='\033[1;33m'
 NC='\033[0m' # No Color
 
 CURLOPTIONS='--silent --tlsv1.2';
-HEADERS='-H "Authorization: ApiKey ${dsApiKey}" -H "Api-Version: v1" -H "Content-Type: application/json"';
+HEADERS='-H "Authorization: ApiKey '${dsApiKey}'" -H "Api-Version: v1" -H "Content-Type: application/json"';
 linuxPlatform='';
 isRPM='';
 
@@ -48,8 +48,8 @@ fi
 # Has ds_agent, but not operational
 if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then
 
-    MANAGERURL="https://workload.${dsmRegion}.cloudone.trendmicro.com:443"
-    ACTIVATIONURL='dsm://agents.workload.${dsmRegion}.cloudone.trendmicro.com:443/'
+    MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
+    ACTIVATIONURL='dsm://agents.workload.'${dsmRegion}'.cloudone.trendmicro.com:443/'
 
     if ! type curl >/dev/null 2>&1; then
         printf "${ERR}Please install CURL before running this script.${NC}\n";
@@ -112,11 +112,11 @@ if [[ $hasDSA != 1 ]]; then
         exit 1;
     fi
 
-    ACCOUNTURL='https://accounts.cloudone.trendmicro.com/api/apikeys/${apiKeyId}'
+    ACCOUNTURL='https://accounts.cloudone.trendmicro.com/api/apikeys/'${apiKeyId}
     dsmRegion=$(eval curl -L $ACCOUNTURL $CURLOPTIONS $HEADERS | jq '.urn' | awk '{split($1,region,":"); print region[4]}')
 
-    ACTIVATIONURL='dsm://agents.workload.${dsmRegion}.cloudone.trendmicro.com:443/'
-    MANAGERURL='https://workload.${dsmRegion}.cloudone.trendmicro.com:443'
+    ACTIVATIONURL='dsm://agents.workload.'${dsmRegion}'.cloudone.trendmicro.com:443/'
+    MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
 
     dsTenantId=$(eval curl -L $MANAGERURL/api/apikeys/current $CURLOPTIONS $HEADERS | jq '.tenantID')
     dsTenantGUID=$(eval curl -L $MANAGERURL/api/apikeys/current $CURLOPTIONS $HEADERS | jq --raw-output '.tenantGUID')
