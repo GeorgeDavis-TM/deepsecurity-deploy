@@ -1,10 +1,20 @@
 #!/bin/bash
 dsApiKey=$1
+dsPolicyId=$2
 
 ERR='\033[0;31m'
 SUCCESS='\033[0;32m'
 WARN='\033[1;33m'
 NC='\033[0m' # No Color
+
+if [[ -z "${dsPolicyId}" ]]; then
+    dsPolicyId=1
+    printf "${WARN}Bash argument dsPolicyId is empty. Activating DS Agent with Base Policy (dsPolicyId = ${dsPolicyId})${NC}\n";
+    logger -t Bash argument dsPolicyId is empty. Activating DS Agent with Base Policy \(dsPolicyId = $dsPolicyId\)
+fi
+
+printf "${WARN}DS Policy Id - ${dsPolicyId}${NC}\n";
+logger -t DS Policy Id - $dsPolicyId
 
 CURLOPTIONS='--silent --tlsv1.2';
 HEADERS='-H "Authorization: ApiKey '${dsApiKey}'" -H "Api-Version: v1" -H "Content-Type: application/json"';
@@ -86,7 +96,7 @@ if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then
     # Reset the ds_agent, for good measure
     /opt/ds_agent/dsa_control -r
     # Activate the ds_agent
-    /opt/ds_agent/dsa_control -a $ACTIVATIONURL "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}"
+    /opt/ds_agent/dsa_control -a $ACTIVATIONURL "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}" "policyid:${dsPolicyId}"
 fi
 
 # Infer no ds_agent installed
@@ -177,6 +187,6 @@ if [[ $hasDSA != 1 ]]; then
 
     sleep 15
     /opt/ds_agent/dsa_control -r
-    /opt/ds_agent/dsa_control -a $ACTIVATIONURL "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}"
-    # /opt/ds_agent/dsa_control -a dsm://agents.workload.${dsmRegion}.cloudone.trendmicro.com:443/ "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}"
+    /opt/ds_agent/dsa_control -a $ACTIVATIONURL "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}" "policyid:${dsPolicyId}"
+    # /opt/ds_agent/dsa_control -a dsm://agents.workload.${dsmRegion}.cloudone.trendmicro.com:443/ "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}" "policyid:${dsPolicyId}"
 fi

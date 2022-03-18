@@ -1,5 +1,15 @@
 #!/bin/bash
 dsApiKey=$1
+dsPolicyId=$2
+
+if [[ -z "${dsPolicyId}" ]]; then    
+    dsPolicyId=1
+    echo "Bash argument dsPolicyId is empty. Activating DS Agent with Base Policy (dsPolicyId = ${dsPolicyId})";
+    logger -t Bash argument dsPolicyId is empty. Activating DS Agent with Base Policy \(dsPolicyId = $dsPolicyId\)
+fi
+
+echo "DS Policy Id - ${dsPolicyId}";
+logger -t DS Policy Id - $dsPolicyId
 
 CURLOPTIONS='--silent --tlsv1.2';
 HEADERS='-H "Authorization: ApiKey '${dsApiKey}'" -H "Api-Version: v1" -H "Content-Type: application/json"';
@@ -26,7 +36,7 @@ if [[ -f /opt/ds_agent/dsa_query ]]; then
     hasDSA=1    
     dsaStatus=`/opt/ds_agent/dsa_query -c GetAgentStatus | grep AgentStatus.agentState | awk '{print $2}'`
     dsmRegion=`/opt/ds_agent/dsa_query -c GetAgentStatus | grep AgentStatus.dsmUrl | awk '{split($2,url,"."); print url[3]}'`
-    dsTenantGUID=`/opt/ds_agent/dsa_query -c GetAgentStatus | grep AgentStatus.dsmDN | awk '{split($2,dn,"/"); print dn[2]}' | awk '{split($1,dn,"="); print dn[2]}'`
+    dsTenantGUID=`/opt/ds_agent/dsa_query -c G≈etAgentStatus | grep AgentStatus.dsmDN | awk '{split($2,dn,"/"); print dn[2]}' | awk '{split($1,dn,"="); print dn[2]}'`
 fi
 
 # Check for ds_agent status first
@@ -82,7 +92,7 @@ if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then
     # Reset the ds_agent, for good measure
     /opt/ds_agent/dsa_control -r
     # Activate the ds_agent
-    /opt/ds_agent/dsa_control -a $ACTIVATIONURL "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}"
+    /opt/ds_agent/dsa_control -a $ACTIVATIONURL "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}" "policyid:${dsPolicyId}"
 fi
 
 # Infer no ds_agent installed
@@ -169,10 +179,10 @@ if [[ $hasDSA != 1 ]]; then
     echo "Install the agent package successfully."
     logger -t Install the agent package successfully.
 
-    dsDeploymentToken=$(eval curl -X POST -L $MANAGERURL/api/agentdeploymentscripts -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' $HEADERS $CURLOPTIONS | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}')  
+    dsDeploymentToken=$(eval curl -X POST -L $MANAGERURL/api/agentdeploymentscripts -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' $HEADERS $CURLOPTIONS | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}')
 
     sleep 15
     /opt/ds_agent/dsa_control -r
-    /opt/ds_agent/dsa_control -a $ACTIVATIONURL "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}"
-    # /opt/ds_agent/dsa_control -a dsm://agents.workload.${dsmRegion}.cloudone.trendmicro.com:443/ "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}"
+    /opt/ds_agent/dsa_control -a $ACTIVATIONURL "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}" "policyid:${dsPolicyId}"
+    # /opt/ds_agent/dsa_control -a dsm://agents.workload.${dsmRegion}.cloudone.trendmicro.com:443/ "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}" "policyid:${dsPolicyId}"
 fi
