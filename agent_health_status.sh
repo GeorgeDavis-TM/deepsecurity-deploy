@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 verbose=false
 
 usage() { echo "Usage: $0 --api-key | -a <valid-api-key> [--policyid | -p <policy-id>] [--verbose | -v] [--help | -h]" 1>&2; exit 1; }
