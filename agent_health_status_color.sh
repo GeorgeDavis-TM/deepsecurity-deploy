@@ -1,11 +1,71 @@
-#!/bin/bash
-dsApiKey=$1
-dsPolicyId=$2
+#!/usr/bin/env bash
+verbose=false
 
 ERR='\033[0;31m'
 SUCCESS='\033[0;32m'
 WARN='\033[1;33m'
 NC='\033[0m' # No Color
+
+usage() { echo "Usage: $0 --api-key | -a <valid-api-key> [--policyid | -p <policy-id>] [--verbose | -v] [--help | -h]" 1>&2; exit 1; }
+
+obfuprintperc () {
+    local perc=50  ## percent to obfuscate
+    local i=0
+    for((i=0; i < ${#1}; i++))
+    do
+    if [ $(( $RANDOM % 100 )) -lt "$perc" ]
+    then
+        printf '%s' '*'
+    else
+        printf '%s' "${1:i:1}"
+    fi
+    done
+    echo
+}
+
+# make args an array, not a string
+args=( )
+
+# replace long arguments
+for arg; do
+    case "$arg" in        
+        --apikey)         args+=( -a ) ;;
+        --policyid)       args+=( -p ) ;;
+        --verbose)        args+=( -v ) ;;
+        --help)           args+=( -h ) ;;
+        *)                args+=( "$arg" ) ;;
+    esac
+done
+
+set -- "${args[@]}"
+
+while getopts "a:p::vh" opt; do
+    case "${opt}" in
+        a)
+            dsApiKey=${OPTARG}            
+            ;;
+        p)
+            dsPolicyId=${OPTARG}            
+            ;;
+        v)
+            verbose=true
+            printf "${WARN}NOTE: verbose is set to ${verbose}${NC}\n";
+            ;;
+        h)
+            usage
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+if [ -z "${dsApiKey}" ]; then
+    usage
+fi
+
+${verbose} && printf "API Key: " &&  obfuprintperc ${dsApiKey}
+${verbose} && echo "Policy Id: ${dsPolicyId}"
 
 if [[ -z "${dsPolicyId}" ]]; then
     dsPolicyId=1
