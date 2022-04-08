@@ -14,6 +14,14 @@ This script runs to execute the following, in the same order
 
 > The API key needs to be passed to the Bash script as an argument during runtime, like so `sudo ./agent_health_status.sh <your-api-key>`
 
+## Usage
+| Switches | Description | Required? |
+|--------| ----------- | --------- |
+| `-a` or `--apikey` | Pass the Cloud One API Key as a **required** argument to the Bash script. | Yes |
+| `-p` or `--policyid` | Pass an optional DSM Policy ID to assign the Policy to the machine during Agent activation. | Optional. It will default to Base Policy, if not provided. |
+| `-v` or `--verbose` | Prints more information on the screen during execution. :warning: API Keys are masked in random character positions. Repeated use of the script could reveal the API key when logged in verbose mode. | Optional. Use for troubleshooting. |
+| `-h` or `--help` | Script usage information would be printed on execution with this switch. | Optional. |
+
 ## Notes
 - A security policy wont be assigned. The script only activates the agent with the Deep Security Manager instance that the API key is associated with. A policy can be assigned based on Event-based tasks such as Agent-Initiated Activation, found [here]("https://cloudone.trendmicro.com/docs/workload-security/event-based-tasks/#events-that-you-can-monitor") on the product documentation.
 - The API key is used in multiple scenarios as part of this script
