@@ -64,7 +64,7 @@ if [ -z "${dsApiKey}" ]; then
     usage
 fi
 
-${verbose} && printf "API Key: " &&  obfuprintperc ${dsApiKey}
+${verbose} && printf "API Key: " && obfuprintperc ${dsApiKey}
 ${verbose} && echo "Policy Id: ${dsPolicyId}"
 
 if [[ -z "${dsPolicyId}" ]]; then
@@ -73,8 +73,8 @@ if [[ -z "${dsPolicyId}" ]]; then
     logger -t Bash argument dsPolicyId is empty. Activating DS Agent with Base Policy \(dsPolicyId = $dsPolicyId\)
 fi
 
-printf "${WARN}DS Policy Id - ${dsPolicyId}${NC}\n";
-logger -t DS Policy Id - $dsPolicyId
+${verbose} && printf "${WARN}DS Policy Id - ${dsPolicyId}${NC}\n";
+${verbose} && logger -t DS Policy Id - $dsPolicyId
 
 CURLOPTIONS='--silent --tlsv1.2';
 HEADERS='-H "Authorization: ApiKey '${dsApiKey}'" -H "Api-Version: v1" -H "Content-Type: application/json"';
@@ -101,6 +101,10 @@ if [[ -f /opt/ds_agent/dsa_query ]]; then
     dsaStatus=`/opt/ds_agent/dsa_query -c GetAgentStatus | grep AgentStatus.agentState | awk '{print $2}'`
     dsmRegion=`/opt/ds_agent/dsa_query -c GetAgentStatus | grep AgentStatus.dsmUrl | awk '{split($2,url,"."); print url[3]}'`
     dsTenantGUID=`/opt/ds_agent/dsa_query -c GetAgentStatus | grep AgentStatus.dsmDN | awk '{split($2,dn,"/"); print dn[2]}' | awk '{split($1,dn,"="); print dn[2]}'`
+
+    ${verbose} && echo "DS Agent Status: ${dsaStatus}"
+    ${verbose} && echo "DS Region: ${dsmRegion}"
+    ${verbose} && echo "DS Tenant GUID: ${dsTenantGUID}"
 fi
 
 # Check for ds_agent status first
@@ -121,11 +125,16 @@ if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then
     MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
     ACTIVATIONURL='dsm://agents.workload.'${dsmRegion}'.cloudone.trendmicro.com:443/'
 
+    ${verbose} && echo "DS Manager URL: ${MANAGERURL}"
+    ${verbose} && echo "DS Activation URL: ${ACTIVATIONURL}"
+
     if ! type curl >/dev/null 2>&1; then
         printf "${ERR}Please install CURL before running this script.${NC}\n";
         logger -t Please install CURL before running this script.
         exit 1;
     fi
+
+    ${verbose} && echo "Using cURL.. curl -L $MANAGERURL/software/deploymentscript/platform/linuxdetectscriptv1/ -o /tmp/PlatformDetection $CURLOPTIONS;"
 
     CURLOUT=$(eval curl -L $MANAGERURL/software/deploymentscript/platform/linuxdetectscriptv1/ -o /tmp/PlatformDetection $CURLOPTIONS;)
 
@@ -151,7 +160,12 @@ if [[ $hasDSA == 1 && $dsaStatus != "green" ]]; then
         exit 1;
     fi   
 
+    ${verbose} && echo "Linux Platform: ${linuxPlatform}"
+    ${verbose} && echo "isRPM: ${isRPM}"
+
     dsDeploymentToken=$(eval curl -X POST -L $MANAGERURL/api/agentdeploymentscripts -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' $HEADERS $CURLOPTIONS | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}')  
+
+    ${verbose} && echo "DS Deployment Token: ${dsDeploymentToken}"
 
     # Reset the ds_agent, for good measure
     /opt/ds_agent/dsa_control -r
@@ -185,11 +199,22 @@ if [[ $hasDSA != 1 ]]; then
     ACCOUNTURL='https://accounts.cloudone.trendmicro.com/api/apikeys/'${apiKeyId}
     dsmRegion=$(eval curl -L $ACCOUNTURL $CURLOPTIONS $HEADERS | jq '.urn' | awk '{split($1,region,":"); print region[4]}')
 
+    ${verbose} && printf "DS API Key ID: " && obfuprintperc ${apiKeyId}
+    ${verbose} && echo "DS Region: ${dsmRegion}"
+    ${verbose} && echo "DS Account URL: ${ACCOUNTURL}"
+
     ACTIVATIONURL='dsm://agents.workload.'${dsmRegion}'.cloudone.trendmicro.com:443/'
     MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
 
+    ${verbose} && echo "DS Manager URL: ${MANAGERURL}"
+    ${verbose} && echo "DS Activation URL: ${ACTIVATIONURL}"
+
     dsTenantId=$(eval curl -L $MANAGERURL/api/apikeys/current $CURLOPTIONS $HEADERS | jq '.tenantID')
     dsTenantGUID=$(eval curl -L $MANAGERURL/api/apikeys/current $CURLOPTIONS $HEADERS | jq --raw-output '.tenantGUID')
+
+    ${verbose} && echo "DS Tenant ID: ${dsTenantId}"
+    ${verbose} && echo "DS Tenant GUID: ${dsTenantGUID}"
+    ${verbose} && echo "Using cURL.. curl -L $MANAGERURL/software/deploymentscript/platform/linuxdetectscriptv1/ -o /tmp/PlatformDetection $CURLOPTIONS;"
 
     CURLOUT=$(eval curl -L $MANAGERURL/software/deploymentscript/platform/linuxdetectscriptv1/ -o /tmp/PlatformDetection $CURLOPTIONS;)
     err=$?
@@ -213,6 +238,9 @@ if [[ $hasDSA != 1 ]]; then
         logger -t Unsupported platform is detected.
         exit 1;
     fi
+
+    ${verbose} && echo "Linux Platform: ${linuxPlatform}"
+    ${verbose} && echo "isRPM: ${isRPM}"
 
     echo "Downloading agent package...."
     if [[ $isRPM == 1 ]]; then package='agent.rpm'
@@ -244,6 +272,8 @@ if [[ $hasDSA != 1 ]]; then
     logger -t Install the agent package successfully.
 
     dsDeploymentToken=$(eval curl -X POST -L $MANAGERURL/api/agentdeploymentscripts -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' $HEADERS $CURLOPTIONS | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}')
+
+    ${verbose} && echo "DS Deployment Token: ${dsDeploymentToken}"
 
     sleep 15
     /opt/ds_agent/dsa_control -r
