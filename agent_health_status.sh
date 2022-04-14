@@ -25,9 +25,6 @@ checkApiPrerequisites() {
         exit 1;
     fi
 
-    apiKeyId=`echo ${dsApiKey} | awk '{split($1,id,":"); print id[1]}'`
-    ACCOUNTURL='https://accounts.cloudone.trendmicro.com/api/apikeys/'${apiKeyId}
-
     if ! type curl >/dev/null 2>&1; then
         printf "${ERR}Please install CURL before running this script.${NC}\n";
         logger -t Please install CURL before running this script.
@@ -82,8 +79,10 @@ if [ -z "${dsApiKey}" ]; then
     echo "Usage: " && usage && exit 1;
 fi
 
-obfuDSApiKeyId=`echo ${dsApiKey} | awk '{split($0,a,":"); print a[1]}'`
-obfuDSApiKeyId=`obfuprintperc ${obfuDSApiKeyId}`
+ACCOUNTURL='https://accounts.cloudone.trendmicro.com/api/apikeys/'
+
+apiKeyId=`echo ${dsApiKey} | awk '{split($1,id,":"); print id[1]}'`
+obfuDSApiKeyId=`obfuprintperc ${apiKeyId}`
 
 obfuDSApiKeySecret=`echo ${dsApiKey} | awk '{split($0,a,":"); print a[2]}'`
 obfuDSApiKeySecret=`obfuprintperc ${obfuDSApiKeySecret}`
