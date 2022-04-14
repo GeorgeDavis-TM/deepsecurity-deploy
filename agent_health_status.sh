@@ -125,10 +125,10 @@ if [[ -f /opt/ds_agent/dsa_query ]]; then
     dsaStatus=`/opt/ds_agent/dsa_query -c GetAgentStatus | grep AgentStatus.agentState | awk '{print $2}'`
     dsmRegion=`/opt/ds_agent/dsa_query -c GetAgentStatus | grep AgentStatus.dsmUrl | awk '{split($2,url,"."); print url[3]}'`
     dsTenantGUID=`/opt/ds_agent/dsa_query -c G≈etAgentStatus | grep AgentStatus.dsmDN | awk '{split($2,dn,"/"); print dn[2]}' | awk '{split($1,dn,"="); print dn[2]}'`
+    obfuDSTenantGUID=`obfuprintperc ${dsTenantGUID}`
 
     ${verbose} && echo "DS Agent Status: ${dsaStatus}"
-    ${verbose} && echo "DS Region: ${dsmRegion}"
-    obfuDSTenantGUID=`obfuprintperc ${dsTenantGUID}`
+    ${verbose} && echo "DS Region: ${dsmRegion}"    
     ${verbose} && echo "DS Tenant GUID: ${obfuDSTenantGUID}"
 fi
 
@@ -147,6 +147,7 @@ if [[ ${hasDSA} == 1 ]]; then
 
         if [[ -z ${dsTenantGUID} ]]; then            
             dsTenantGUID=`curl -L ${MANAGERURL}/api/apikeys/current ${CURLOPTIONS} ${HEADERS} | jq --raw-output '.tenantGUID'`
+            obfuDSTenantGUID=`obfuprintperc ${dsTenantGUID}`
             ${verbose} && echo "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
         fi
 
@@ -214,6 +215,7 @@ if [[ ${hasDSA} != 1 ]]; then
 
     if [[ -z ${dsTenantGUID} ]]; then            
         dsTenantGUID=`curl -L ${MANAGERURL}/api/apikeys/current ${CURLOPTIONS} ${HEADERS} | jq --raw-output '.tenantGUID'`
+        obfuDSTenantGUID=`obfuprintperc ${dsTenantGUID}`
         ${verbose} && echo "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
     fi
 
