@@ -106,7 +106,7 @@ ${verbose} && echo "${WARN}Deploying with Policy Id - ${dsPolicyId}${NC}\n";
 ${verbose} && logger -t Deploying with Policy Id - ${dsPolicyId}
 
 CURLOPTIONS='--silent --tlsv1.2';
-HEADERS='-H "Authorization: ApiKey '${dsApiKey}'" -H "Api-Version: v1" -H "Content-Type: application/json"';
+HEADERS='-H "Authorization: ApiKey '${dsApiKey}'" -H "api-version: v1" -H "Content-Type: application/json"';
 linuxPlatform='';
 isRPM='';
 
@@ -146,12 +146,12 @@ if [[ ${hasDSA} == 1 ]]; then
 
         checkApiPrerequisites
         if [[ -z ${dsmRegion} ]]; then                     
-            dsmRegion=`curl -L ${ACCOUNTURL}${apiKeyId} ${CURLOPTIONS} ${HEADERS} | jq '.urn' | awk '{split($1,region,":"); print region[4]}'`
+            dsmRegion=`curl -L ${CURLOPTIONS} "${HEADERS[@]}" ${ACCOUNTURL}${apiKeyId} | jq '.urn' | awk '{split($1,region,":"); print region[4]}'`
             ${verbose} && echo "DS Region (via API): ${dsmRegion}"
         fi
 
         if [[ -z ${dsTenantGUID} ]]; then            
-            dsTenantGUID=`curl -L ${MANAGERURL}/api/apikeys/current ${CURLOPTIONS} ${HEADERS} | jq --raw-output '.tenantGUID'`
+            dsTenantGUID=`curl -L ${CURLOPTIONS} "${HEADERS[@]}" ${MANAGERURL}/api/apikeys/current | jq --raw-output '.tenantGUID'`
             obfuDSTenantGUID=`obfuprintperc ${dsTenantGUID}`
             ${verbose} && echo "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
         fi
@@ -191,7 +191,7 @@ if [[ ${hasDSA} == 1 ]]; then
         ${verbose} && echo "Linux Platform: ${linuxPlatform}"
         ${verbose} && echo "isRPM: ${isRPM}"
 
-        dsDeploymentToken=`curl -X POST -L ${MANAGERURL}/api/agentdeploymentscripts -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' ${HEADERS} ${CURLOPTIONS} | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}'`
+        dsDeploymentToken=`curl -X POST -L "${HEADERS[@]}" ${CURLOPTIONS} -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' ${MANAGERURL}/api/agentdeploymentscripts | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}'`
 
         ${verbose} && echo "DS Deployment Token: ${dsDeploymentToken}"        
 
@@ -214,12 +214,12 @@ if [[ ${hasDSA} != 1 ]]; then
 
     checkApiPrerequisites    
     if [[ -z ${dsmRegion} ]]; then                     
-        dsmRegion=`curl -L ${ACCOUNTURL}${apiKeyId} ${CURLOPTIONS} ${HEADERS} | jq '.urn' | awk '{split($1,region,":"); print region[4]}'`
+        dsmRegion=`curl -L ${CURLOPTIONS} "${HEADERS[@]}" ${ACCOUNTURL}${apiKeyId} | jq '.urn' | awk '{split($1,region,":"); print region[4]}'`
         ${verbose} && echo "DS Region (via API): ${dsmRegion}"
     fi
 
     if [[ -z ${dsTenantGUID} ]]; then            
-        dsTenantGUID=`curl -L ${MANAGERURL}/api/apikeys/current ${CURLOPTIONS} ${HEADERS} | jq --raw-output '.tenantGUID'`
+        dsTenantGUID=`curl -L ${CURLOPTIONS} "${HEADERS[@]}" ${MANAGERURL}/api/apikeys/current | jq --raw-output '.tenantGUID'`
         obfuDSTenantGUID=`obfuprintperc ${dsTenantGUID}`
         ${verbose} && echo "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
     fi
@@ -234,9 +234,9 @@ if [[ ${hasDSA} != 1 ]]; then
     ${verbose} && echo "DS Manager URL: ${MANAGERURL}"
     ${verbose} && echo "DS Activation URL: ${ACTIVATIONURL}"
 
-    dsTenantId=`curl -L ${MANAGERURL}/api/apikeys/current ${CURLOPTIONS} ${HEADERS} | jq '.tenantID'`
+    dsTenantId=`curl -L ${CURLOPTIONS} "${HEADERS[@]}" ${MANAGERURL}/api/apikeys/current | jq '.tenantID'`
     obfuDSTenantId=`obfuprintperc ${dsTenantId}`
-    dsTenantGUID=`curl -L ${MANAGERURL}/api/apikeys/current ${CURLOPTIONS} ${HEADERS} | jq --raw-output '.tenantGUID'`
+    dsTenantGUID=`curl -L ${CURLOPTIONS} "${HEADERS[@]}" ${MANAGERURL}/api/apikeys/current | jq --raw-output '.tenantGUID'`
     obfuDSTenantGUID=`obfuprintperc ${dsTenantGUID}`
 
     ${verbose} && echo "DS Tenant ID: ${obfuDSTenantId}"
@@ -298,7 +298,7 @@ if [[ ${hasDSA} != 1 ]]; then
     printf "${SUCCESS}Install the agent package successfully.${NC}\n";
     logger -t Install the agent package successfully.
 
-    dsDeploymentToken=`curl -X POST -L ${MANAGERURL}/api/agentdeploymentscripts -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' ${HEADERS} ${CURLOPTIONS} | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}'`
+    dsDeploymentToken=`curl -X POST -L "${HEADERS[@]}" ${CURLOPTIONS} -d '{"platform": "linux","validateCertificateRequired": false,"validateDigitalSignatureRequired": false,"activationRequired": true}' ${MANAGERURL}/api/agentdeploymentscripts | jq --raw-output '.scriptBody' | tail -n 1 | awk '{split($0,dsToken,"token:"); print dsToken[2]}' | awk '{split($0,dsToken," "); print dsToken[1]}' | awk '{print substr($0,1,length($0)-1)}'`
 
     ${verbose} && echo "DS Deployment Token: ${dsDeploymentToken}"
 
