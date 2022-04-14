@@ -31,7 +31,7 @@ checkApiPrerequisites() {
     fi
 
     apiKeyId=`echo ${dsApiKey} | awk '{split($1,id,":"); print id[1]}'`
-    ACCOUNTURL='https://accounts.cloudone.trendmicro.com/api/apikeys/'${apiKeyId}
+    ACCOUNTURL='https://accounts.cloudone.trendmicro.com/api/apikeys/'
 
     if ! type curl >/dev/null 2>&1; then
         printf "${ERR}Please install CURL before running this script.${NC}\n";
@@ -94,7 +94,7 @@ obfuDSApiKeySecret=`echo ${dsApiKey} | awk '{split($0,a,":"); print a[2]}'`
 obfuDSApiKeySecret=`obfuprintperc ${obfuDSApiKeySecret}`
 
 
-${verbose} && printf "API Key: ${obfuDSApiKeyId}:${obfuDSApiKeySecret}"
+${verbose} && echo "API Key: ${obfuDSApiKeyId}:${obfuDSApiKeySecret}"
 ${verbose} && echo "Policy Id: ${dsPolicyId}"
 
 if [[ -z "${dsPolicyId}" ]]; then
@@ -103,7 +103,7 @@ if [[ -z "${dsPolicyId}" ]]; then
     logger -t Bash argument dsPolicyId is empty. Activating DS Agent with Base Policy \(dsPolicyId = ${dsPolicyId}\)
 fi
 
-${verbose} && printf "${WARN}Deploying with Policy Id - ${dsPolicyId}${NC}\n";
+${verbose} && echo "${WARN}Deploying with Policy Id - ${dsPolicyId}${NC}\n";
 ${verbose} && logger -t Deploying with Policy Id - ${dsPolicyId}
 
 CURLOPTIONS='--silent --tlsv1.2';
@@ -135,7 +135,7 @@ if [[ -f /opt/ds_agent/dsa_query ]]; then
     ${verbose} && echo "DS Agent Status: ${dsaStatus}"
     ${verbose} && echo "DS Region: ${dsmRegion}"
     obfuDSTenantGUID=`obfuprintperc ${dsTenantGUID}`
-    ${verbose} && printf "DS Tenant GUID: ${obfuDSTenantGUID}"
+    ${verbose} && echo "DS Tenant GUID: ${obfuDSTenantGUID}"
 fi
 
 # Check for ds_agent status first
@@ -147,13 +147,13 @@ if [[ ${hasDSA} == 1 ]]; then
 
         checkApiPrerequisites
         if [[ -z ${dsmRegion} ]]; then                     
-            dsmRegion=$(eval curl -L ${ACCOUNTURL} ${CURLOPTIONS} ${HEADERS} | jq '.urn' | awk '{split($1,region,":"); print region[4]}')
+            dsmRegion=$(eval curl -L ${ACCOUNTURL}${apiKeyId} ${CURLOPTIONS} ${HEADERS} | jq '.urn' | awk '{split($1,region,":"); print region[4]}')
             ${verbose} && echo "DS Region (via API): ${dsmRegion}"
         fi
 
         if [[ -z ${dsTenantGUID} ]]; then            
             dsTenantGUID=$(eval curl -L ${MANAGERURL}/api/apikeys/current ${CURLOPTIONS} ${HEADERS} | jq --raw-output '.tenantGUID')
-            ${verbose} && printf "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
+            ${verbose} && echo "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
         fi
 
         MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
@@ -198,7 +198,7 @@ if [[ ${hasDSA} == 1 ]]; then
         # Reset the ds_agent, for good measure
         /opt/ds_agent/dsa_control -r
         
-        ${verbose} && printf "/opt/ds_agent/dsa_control -a ${ACTIVATIONURL} tenantID:${obfuDSTenantGUID} token:${dsDeploymentToken} policyid:${dsPolicyId}"
+        ${verbose} && echo "/opt/ds_agent/dsa_control -a ${ACTIVATIONURL} tenantID:${obfuDSTenantGUID} token:${dsDeploymentToken} policyid:${dsPolicyId}"
 
         # Activate the ds_agent
         /opt/ds_agent/dsa_control -a ${ACTIVATIONURL} "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}" "policyid:${dsPolicyId}"
@@ -214,18 +214,18 @@ if [[ ${hasDSA} != 1 ]]; then
 
     checkApiPrerequisites    
     if [[ -z ${dsmRegion} ]]; then                     
-        dsmRegion=$(eval curl -L ${ACCOUNTURL} ${CURLOPTIONS} ${HEADERS} | jq '.urn' | awk '{split($1,region,":"); print region[4]}')
+        dsmRegion=$(eval curl -L ${ACCOUNTURL}${apiKeyId} ${CURLOPTIONS} ${HEADERS} | jq '.urn' | awk '{split($1,region,":"); print region[4]}')
         ${verbose} && echo "DS Region (via API): ${dsmRegion}"
     fi
 
     if [[ -z ${dsTenantGUID} ]]; then            
         dsTenantGUID=$(eval curl -L ${MANAGERURL}/api/apikeys/current ${CURLOPTIONS} ${HEADERS} | jq --raw-output '.tenantGUID')
-        ${verbose} && printf "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
+        ${verbose} && echo "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
     fi
 
-    ${verbose} && printf "DS API Key ID: ${apiKeyId}"
+    ${verbose} && echo "DS API Key ID: ${apiKeyId}"
     ${verbose} && echo "DS Region: ${dsmRegion}"
-    ${verbose} && echo "DS Account URL: ${ACCOUNTURL}"
+    ${verbose} && echo "DS Account URL: ${ACCOUNTURL}${obfuDSApiKeyId}"
 
     ACTIVATIONURL='dsm://agents.workload.'${dsmRegion}'.cloudone.trendmicro.com:443/'
     MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
@@ -238,8 +238,8 @@ if [[ ${hasDSA} != 1 ]]; then
     dsTenantGUID=$(eval curl -L ${MANAGERURL}/api/apikeys/current ${CURLOPTIONS} ${HEADERS} | jq --raw-output '.tenantGUID')
     obfuDSTenantGUID=`obfuprintperc ${dsTenantGUID}`
 
-    ${verbose} && printf "DS Tenant ID: ${obfuDSTenantId}"
-    ${verbose} && printf "DS Tenant GUID: ${obfuDSTenantGUID}"
+    ${verbose} && echo "DS Tenant ID: ${obfuDSTenantId}"
+    ${verbose} && echo "DS Tenant GUID: ${obfuDSTenantGUID}"
     ${verbose} && echo "Using cURL.. curl -L ${MANAGERURL}/software/deploymentscript/platform/linuxdetectscriptv1/ -o /tmp/PlatformDetection ${CURLOPTIONS};"
 
     CURLOUT=$(eval curl -L ${MANAGERURL}/software/deploymentscript/platform/linuxdetectscriptv1/ -o /tmp/PlatformDetection ${CURLOPTIONS};)
@@ -304,7 +304,7 @@ if [[ ${hasDSA} != 1 ]]; then
     sleep 15
     /opt/ds_agent/dsa_control -r
     
-    ${verbose} && printf "/opt/ds_agent/dsa_control -a ${ACTIVATIONURL} tenantID:${obfuDSTenantGUID} token:${dsDeploymentToken} policyid:${dsPolicyId}"
+    ${verbose} && echo "/opt/ds_agent/dsa_control -a ${ACTIVATIONURL} tenantID:${obfuDSTenantGUID} token:${dsDeploymentToken} policyid:${dsPolicyId}"
 
     /opt/ds_agent/dsa_control -a ${ACTIVATIONURL} "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}" "policyid:${dsPolicyId}"
     # /opt/ds_agent/dsa_control -a dsm://agents.workload.${dsmRegion}.cloudone.trendmicro.com:443/ "tenantID:${dsTenantGUID}" "token:${dsDeploymentToken}" "policyid:${dsPolicyId}"
