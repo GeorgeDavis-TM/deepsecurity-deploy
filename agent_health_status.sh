@@ -151,8 +151,13 @@ if [[ ${hasDSA} == 1 ]]; then
             ${verbose} && echo "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
         fi
 
-        MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
-        ACTIVATIONURL='dsm://agents.workload.'${dsmRegion}'.cloudone.trendmicro.com:443/'
+        if [[ "${dsmRegion}" != "us-1" ]]; then
+            MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
+            ACTIVATIONURL='dsm://agents.workload.'${dsmRegion}'.cloudone.trendmicro.com:443/'
+        else
+            MANAGERURL='https://app.deepsecurity.trendmicro.com:443'
+            ACTIVATIONURL='dsm://agents.deepsecurity.trendmicro.com:443/'
+        fi
 
         ${verbose} && echo "DS Manager URL: ${MANAGERURL}"
         ${verbose} && echo "DS Activation URL: ${ACTIVATIONURL}"
@@ -219,12 +224,17 @@ if [[ ${hasDSA} != 1 ]]; then
         ${verbose} && echo "DS Tenant GUID (via API): ${obfuDSTenantGUID}"
     fi
 
-    ${verbose} && echo "DS API Key ID: ${apiKeyId}"
+    ${verbose} && echo "DS API Key ID: ${obfuDSApiKeyId}"
     ${verbose} && echo "DS Region: ${dsmRegion}"
     ${verbose} && echo "DS Account URL: ${ACCOUNTURL}${obfuDSApiKeyId}"
 
-    ACTIVATIONURL='dsm://agents.workload.'${dsmRegion}'.cloudone.trendmicro.com:443/'
-    MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
+    if [[ "${dsmRegion}" != "us-1" ]]; then
+        MANAGERURL='https://workload.'${dsmRegion}'.cloudone.trendmicro.com:443'
+        ACTIVATIONURL='dsm://agents.workload.'${dsmRegion}'.cloudone.trendmicro.com:443/'
+    else
+        MANAGERURL='https://app.deepsecurity.trendmicro.com:443'
+        ACTIVATIONURL='dsm://agents.deepsecurity.trendmicro.com:443/'
+    fi
 
     ${verbose} && echo "DS Manager URL: ${MANAGERURL}"
     ${verbose} && echo "DS Activation URL: ${ACTIVATIONURL}"
